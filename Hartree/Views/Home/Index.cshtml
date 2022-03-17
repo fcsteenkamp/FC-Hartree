@@ -1,0 +1,134 @@
+﻿
+@{
+    ViewData["Title"] = "Home Page";
+}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+<div class="text-center">
+    <div class="container">
+
+        <div class="alert alert-primary" role="alert">
+            My Holdings
+        </div>
+        <h2>Opening Balance: @Model.OpeningValue</h2>
+        <h2>Closing Balance: @Model.ClosingValue</h2>
+
+        <div class="row">
+            <div class="col">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="table-dark" colspan="3">Instrument Performance Data</th>
+                        </tr>
+                        <tr>
+                            <th class="table-dark" scope="col">#</th>
+                            <th class="table-dark" scope="col">Date</th>
+                            <th class="table-dark" scope="col">Value</th>
+                        </tr>
+                    </thead>
+
+                    @for (int i = 0, counter = 1; i < Model.PerfData.Count; i++)
+                    {
+                        @if (Model.PerfData[i].ClassId == 1)
+                        {
+
+                            <tr>
+                                <th scope="row">@counter</th>
+                                <td>@Model.PerfData[i].Date.ToString("yyyy-MM-dd")</td>
+                                <td>@Model.PerfData[i].Value</td>
+                            </tr>
+
+                            counter++;
+                        }
+                    }
+                </table>
+            </div>
+            <div class="col">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="table-dark" colspan="3">Holdings Data</th>
+                        </tr>
+                        <tr>
+                            <th class="table-dark" scope="col">#</th>
+                            <th class="table-dark" scope="col">Date</th>
+                            <th class="table-dark" scope="col">Value</th>
+                        </tr>
+                    </thead>
+                    @for (int i = 0, counter = 1; i < Model.PerfData.Count; i++)
+                    {
+                        @if (Model.PerfData[i].ClassId == 2)
+                        {
+                            <tr>
+                                <th scope="row">@counter</th>
+                                <td>@Model.PerfData[i].Date.ToString("yyyy-MM-dd")</td>
+                                <td>@Model.PerfData[i].Value</td>
+                            </tr>
+
+                            counter++;
+                        }
+                    }
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <canvas id="myChart" width="900" height="400"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('myChart').getContext('2d');
+
+    var dataObject = @Html.Raw(Json.Serialize(Model));
+
+
+    var PerfData = dataObject.perfData.filter(function (el) {
+        return el.classId == 1;
+    });
+
+    var HoldingsData = dataObject.perfData.filter(function (el) {
+        return el.classId == 2;
+    });
+
+    var OpenCloseData = [];
+    var OpenValue = { date: HoldingsData[0].date, value: dataObject.openingValue };
+    var CloseValue = { date: HoldingsData[HoldingsData.length-1].date, value: dataObject.closingValue };
+    OpenCloseData.push(OpenValue);
+    OpenCloseData.push(CloseValue);
+
+
+    const myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: "Instrument Performance Data",
+                    data: PerfData,
+                    //backgroundColor: "rgba(225,0,0,0.4)",
+                    borderColor: "rgba(91,144,188,1)", // The main line color
+                    //borderCapStyle: 'square',
+                },
+                {
+                    label: "Holdings Data",
+                    data: HoldingsData,
+                    borderColor: "rgba(171,171,171,1)", // The main line color
+                    //borderCapStyle: 'square',
+                },
+                {
+                    label: "Opening/Closing",
+                    data: OpenCloseData,
+                    showLine: false,
+                    borderColor: "red", // The main line color
+                    pointRadius: 10
+                    //borderCapStyle: 'square',
+                }]
+        },
+        options: {
+            parsing: {
+                xAxisKey: 'date',
+                yAxisKey: 'value'
+            }
+        }
+    });
+</script>
